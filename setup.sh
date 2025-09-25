@@ -1,32 +1,35 @@
 #!/bin/bash
+
 # Commands to setup a new conda environment and install all the necessary packages
 # See the environment.yaml file for "conda env export > environment.yaml" after running this.
 
 set -e
 
-conda create -n BCI python=3.10.8 -y
-conda activate BCI
+mamba create -n BCI python=3.10.8 mamba -y
+eval "$(mamba shell hook --shell bash)"
+mamba activate BCI
 
-conda install numpy matplotlib tqdm scikit-image jupyterlab -y
-conda install -c conda-forge accelerate -y
+mamba install numpy matplotlib tqdm scikit-image jupyterlab -y
+mamba install -c conda-forge accelerate -y
 
-pip install clip-retrieval clip pandas matplotlib ftfy regex kornia umap-learn
-pip install dalle2-pytorch
-
-pip install open_clip_torch
-
-pip install transformers==4.28.0.dev0
-pip install diffusers==0.24.0
-
-pip install braindecode==0.8.1
-
-pip install torchvision==0.15.2 torch==2.0.1
-
-pip install info-nce-pytorch==0.1.0
-pip install pytorch-msssim
-
-pip install reformer_pytorch
-
-pip install mne
-pip install wandb
-pip install einops
+pip install clip-retrieval \
+	clip \
+	pandas \
+	matplotlib \
+	ftfy \
+	regex \
+	kornia \
+	umap-learn \
+	dalle2-pytorch \
+	open_clip_torch \
+	transformers \
+	diffusers \
+	braindecode==0.8.1 \
+	torchvision \
+	torch \
+	info-nce-pytorch==0.1.0 \
+	pytorch-msssim \
+	reformer_pytorch \
+	mne \
+	wandb \
+	einops
