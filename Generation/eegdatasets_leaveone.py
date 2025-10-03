@@ -10,12 +10,10 @@ from PIL import Image
 import requests
 
 import os
-proxy = 'http://127.0.0.1:7890'
-os.environ['http_proxy'] = proxy
-os.environ['https_proxy'] = proxy
+
 cuda_device_count = torch.cuda.device_count()
-print(cuda_device_count)
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
+print(f"Found {cuda_device_count} cuda devices. Using {device} device.")
 # vlmodel, preprocess = clip.load("ViT-B/32", device=device)
 model_type = 'ViT-H-14'
 import open_clip
@@ -33,6 +31,7 @@ with open(config_path, "r") as config_file:
 data_path = config["data_path"]
 img_directory_training = config["img_directory_training"]
 img_directory_test = config["img_directory_test"]
+features_path = config["features_path"]
 
 
 class EEGDataset():
@@ -61,13 +60,17 @@ class EEGDataset():
         
         if self.classes is None and self.pictures is None:
             # Try to load the saved features if they exist
-            features_filename = os.path.join(f'{model_type}_features_train.pt') if self.train else os.path.join(f'{model_type}_features_test.pt')
+            features_filename = os.path.join(
+                features_path, 
+                f'{model_type}_features_train.pt' if self.train else f'{model_type}_features_test.pt'
+            )
             
             if os.path.exists(features_filename) :
                 saved_features = torch.load(features_filename)
                 self.text_features = saved_features['text_features']
                 self.img_features = saved_features['img_features']
             else:
+                print("Could not find existing features, will generate them from scratch")
                 self.text_features = self.Textencoder(self.text)
                 self.img_features = self.ImageEncoder(self.img)
                 torch.save({
@@ -77,6 +80,7 @@ class EEGDataset():
         else:
             self.text_features = self.Textencoder(self.text)
             self.img_features = self.ImageEncoder(self.img)
+        print("Finished loading features")
             
     def load_data(self):
         data_list = []

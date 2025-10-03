@@ -27,3 +27,6 @@ Retrieval/Outputs
 Retrieval/sliding_window_outputs
 Retrieval/Visualize
 Retrieval/wandb
+__pycache__
+*.pyc
+tmp/

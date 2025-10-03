@@ -5,14 +5,12 @@
 
 set -e
 
-mamba create -n BCI python=3.10.8 mamba -y
-eval "$(mamba shell hook --shell bash)"
-mamba activate BCI
-
-mamba install numpy matplotlib tqdm scikit-image jupyterlab -y
-mamba install -c conda-forge accelerate -y
-
-pip install clip-retrieval \
+mamba create -n BCI python=3.10.8 mamba -y -c conda-forge
+eval "$(conda shell.bash hook)"
+conda activate BCI
+mamba install numpy matplotlib tqdm scikit-image jupyterlab -y -c conda-forge
+pip install \
+	clip-retrieval \
 	clip \
 	pandas \
 	matplotlib \
@@ -24,6 +22,7 @@ pip install clip-retrieval \
 	open_clip_torch \
 	transformers \
 	diffusers \
+	accelerate \
 	braindecode==0.8.1 \
 	torchvision \
 	torch \
@@ -32,4 +31,5 @@ pip install clip-retrieval \
 	reformer_pytorch \
 	mne \
 	wandb \
-	einops
+	einops \
+	lightning

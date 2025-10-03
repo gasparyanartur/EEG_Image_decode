@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import math
 import torch
@@ -230,21 +231,20 @@ def unpatchify(x, patch_size):
 
 class wandb_logger:
     def __init__(self, config):
-        try:
-            wandb.init(
-                # Set the project where this run will be logged
-                project=config['project'],
-                name=config['name'],
-                config=config,
-                entity=config['entity'],            
-                )
-        except:
+        print(f"Setting up wandb logger with {config}...")
+        if isinstance(config, dict):
                 wandb.init(
-                # Set the project where this run will be logged
-                project=config.project,
-                name=config.name,
-                config=config,
-                entity=config.entity,            
+                    project=config['project'],
+                    name=config['name'],
+                    config=config,
+                    entity=config['entity'],            
+                )
+        else:
+                wandb.init(
+                    project=config.project,
+                    name=config.name,
+                    config=config,
+                    entity=config.entity,            
                 )
 
         self.config = config

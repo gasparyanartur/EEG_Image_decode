@@ -7,8 +7,6 @@ from torch.nn import functional as F
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 
-os.environ["WANDB_API_KEY"] = "KEY"
-os.environ["WANDB_MODE"] = 'offline'
 from itertools import combinations
 
 import clip
@@ -354,6 +352,7 @@ def evaluate_model(sub, eeg_model, dataloader, device, text_features_all, img_fe
     return average_loss, accuracy, top5_acc
 
 def main_train_loop(sub, current_time, eeg_model, train_dataloader, test_dataloader, optimizer, device, text_features_train_all, text_features_test_all, img_features_train_all, img_features_test_all, config, logger=None):
+    print("Starting training loop...")
     logger = wandb_logger(config) if logger else None
     logger.watch(eeg_model,logger) 
     train_losses, train_accuracies = [], []
@@ -367,6 +366,7 @@ def main_train_loop(sub, current_time, eeg_model, train_dataloader, test_dataloa
     best_epoch_info = {}
     results = []  # List to store results for each epoch
     
+    print(f"Training model for {config.epochs} epochs")
     for epoch in range(config.epochs):
         # Train the model
         train_loss, train_accuracy, features_tensor = train_model(sub, eeg_model, train_dataloader, optimizer, device, text_features_train_all, img_features_train_all, config=config)
@@ -508,10 +508,10 @@ import datetime
 def main():
     # Use argparse to parse the command-line arguments
     parser = argparse.ArgumentParser(description='EEG Transformer Training Script')
-    parser.add_argument('--data_path', type=str, default="/root/autodl-tmp/THINGS/Preprocessed_data_250Hz", help='Path to the EEG dataset')
+    parser.add_argument('--data_path', type=str, default="../data/things-eeg2/Preprocessed_data_250Hz", help='Path to the EEG dataset')
     parser.add_argument('--output_dir', type=str, default='./outputs/contrast', help='Directory to save output results')    
-    parser.add_argument('--project', type=str, default="train_pos_img_text_rep", help='WandB project name')
-    parser.add_argument('--entity', type=str, default="sustech_rethinkingbci", help='WandB entity name')
+    parser.add_argument('--project', type=str, default="atms_reconstruction", help='WandB project name')
+    parser.add_argument('--entity', type=str, default="gasparyanartur", help='WandB entity name')
     parser.add_argument('--name', type=str, default="lr=3e-4_img_pos_pro_eeg", help='Experiment name')
     parser.add_argument('--lr', type=float, default=3e-4, help='Learning rate')
     parser.add_argument('--epochs', type=int, default=40, help='Number of epochs')
@@ -524,6 +524,10 @@ def main():
     parser.add_argument('--subjects', nargs='+', default=['sub-01', 'sub-02', 'sub-03', 'sub-04', 'sub-05', 'sub-06', 'sub-07', 'sub-08', 'sub-09', 'sub-10'], help='List of subject IDs (default: sub-01 to sub-10)')    
     args = parser.parse_args()
 
+    print("Running EEG Transformer Training Script with the following arguments:")
+    for arg, value in vars(args).items():
+        print(f"{arg}: {value}")
+
     # Set device based on the argument
     if args.device == 'gpu' and torch.cuda.is_available():
         device = torch.device(args.gpu)
@@ -534,11 +538,13 @@ def main():
     current_time = datetime.datetime.now().strftime("%m-%d_%H-%M")
 
     for sub in subjects:
+        print(f"Subject {sub}")
         eeg_model = globals()[args.encoder_type]()
         eeg_model.to(device)
 
         optimizer = AdamW(itertools.chain(eeg_model.parameters()), lr=args.lr)
 
+        print("Loading data...")
         if args.insubject:
             train_dataset = EEGDataset(args.data_path, subjects=[sub], train=True)
             test_dataset = EEGDataset(args.data_path, subjects=[sub], train=False)
@@ -554,8 +560,21 @@ def main():
         img_features_train_all = train_dataset.img_features
         img_features_test_all = test_dataset.img_features
 
-        results = main_train_loop(sub, current_time, eeg_model, train_loader, test_loader, optimizer, device, 
-                                  text_features_train_all, text_features_test_all, img_features_train_all, img_features_test_all, config=args, logger=args.logger)
+        results = main_train_loop(
+            sub=sub, 
+            current_time=current_time, 
+            eeg_model=eeg_model, 
+            train_dataloader=train_loader, 
+            test_dataloader=test_loader, 
+            optimizer=optimizer, 
+            device=device, 
+            text_features_train_all=text_features_train_all, 
+            text_features_test_all=text_features_test_all, 
+            img_features_train_all=img_features_train_all, 
+            img_features_test_all=img_features_test_all, 
+            config=args, 
+            logger=args.logger
+        )
 
 
         # Save results to a CSV file

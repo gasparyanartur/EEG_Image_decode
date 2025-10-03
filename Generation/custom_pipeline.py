@@ -456,27 +456,31 @@ def encode_image(image, image_encoder, feature_extractor, num_images_per_prompt=
 class Generator4Embeds:
 
     def __init__(self, num_inference_steps=1, device='cuda') -> None:
+        print("Loading generator...")
         import os
-        os.environ['http_proxy'] = 'http://10.16.35.10:13390' 
-        os.environ['https_proxy'] = 'http://10.16.35.10:13390' 
-
         self.num_inference_steps = num_inference_steps
         self.dtype = torch.float16
         self.device = device
         
         # path = '/home/weichen/.cache/huggingface/hub/models--stabilityai--sdxl-turbo/snapshots/f4b0486b498f84668e828044de1d0c8ba486e05b'
         # path = "/home/ldy/Workspace/sdxl-turbo/f4b0486b498f84668e828044de1d0c8ba486e05b"
+        print("Loading pipe...")
         pipe = DiffusionPipeline.from_pretrained("stabilityai/sdxl-turbo", torch_dtype=torch.float16, variant="fp16")
+        print("Pipe loaded")
         # pipe = DiffusionPipeline.from_pretrained(path, torch_dtype=torch.float16, variant="fp16")
-        pipe.to(device)
         pipe.generate_ip_adapter_embeds = generate_ip_adapter_embeds.__get__(pipe)
         # load ip adapter
+        print("\tLoading ip adapter...")
         pipe.load_ip_adapter(
             "h94/IP-Adapter", subfolder="sdxl_models", 
             weight_name="ip-adapter_sdxl_vit-h.safetensors", 
             torch_dtype=torch.float16)
+        print("\tIP adapter loaded")
         # set ip_adapter scale (defauld is 1)
         pipe.set_ip_adapter_scale(1)
+
+        pipe.to(device)
+        print("Finished loading generator")
         self.pipe = pipe
 
     def generate(self, image_embeds, text_prompt='', generator=None):
